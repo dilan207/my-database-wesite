@@ -1,0 +1,41 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | EmployeeHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="login-body">
+
+    <main class="login-card">
+        <div class="brand-icon">E</div>
+
+        <h1>Welcome Back</h1>
+        <p class="muted">Sign in to EmployeeHub</p>
+
+        {% if error %}
+            <div class="alert error">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('login') }}">
+            <label for="username">Username</label>
+            <input id="username" type="text" name="username"
+                   placeholder="Enter username" required autocomplete="username">
+
+            <label for="password">Password</label>
+            <input id="password" type="password" name="password"
+                   placeholder="Enter password" required
+                   autocomplete="current-password">
+
+            <button class="primary-btn full-width" type="submit">
+                Sign In →
+            </button>
+        </form>
+
+        <p class="login-footer">Employee Management System</p>
+    </main>
+
+</body>
+</html>

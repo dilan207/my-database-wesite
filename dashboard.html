@@ -1,0 +1,230 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | EmployeeHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="app-layout">
+
+    <aside class="sidebar">
+        <div class="brand"><span class="brand-icon small">E</span> EmployeeHub</div>
+
+        <p class="nav-label">MAIN MENU</p>
+        <a class="nav-link selected" href="{{ url_for('dashboard') }}">▦ &nbsp; Dashboard</a>
+        <a class="nav-link" href="#employee-section">♙ &nbsp; Employees</a>
+        <a class="nav-link" href="#add-section">＋ &nbsp; Add Employee</a>
+
+        <div class="sidebar-bottom">
+            <div class="user-avatar">A</div>
+            <div class="user-info">
+                <strong>{{ username }}</strong>
+                <span>Administrator</span>
+            </div>
+            <form method="POST" action="{{ url_for('logout') }}">
+                <button class="logout-btn" type="submit" title="Logout">↪</button>
+            </form>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <header class="topbar">
+            <div>
+                <h1>Dashboard</h1>
+                <p class="muted">Welcome back! Here's your employee overview.</p>
+            </div>
+            <div class="status-pill"><span></span> System Online</div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <section class="stats-grid">
+            <article class="stat-card">
+                <div class="stat-icon purple">♙</div>
+                <p>Total Employees</p>
+                <h2>{{ total }}</h2>
+                <span class="muted">All registered employees</span>
+            </article>
+
+            <article class="stat-card">
+                <div class="stat-icon green">✓</div>
+                <p>Active Employees</p>
+                <h2>{{ active }}</h2>
+                <span class="muted">Currently active</span>
+            </article>
+
+            <article class="stat-card">
+                <div class="stat-icon blue">▤</div>
+                <p>Departments</p>
+                <h2>{{ employees|map(attribute='department')|select|unique|list|length }}</h2>
+                <span class="muted">In current results</span>
+            </article>
+        </section>
+
+        <section class="panel" id="add-section">
+            <div class="section-heading">
+                <div>
+                    <h2>Add New Employee</h2>
+                    <p class="muted">Enter employee information below.</p>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('add_employee') }}" class="employee-form">
+                <div class="form-field">
+                    <label>Full Name *</label>
+                    <input name="name" required placeholder="Employee name">
+                </div>
+                <div class="form-field">
+                    <label>Phone Number *</label>
+                    <input name="phone" required placeholder="07XXXXXXXX">
+                </div>
+                <div class="form-field">
+                    <label>Email</label>
+                    <input type="email" name="email" placeholder="employee@example.com">
+                </div>
+                <div class="form-field">
+                    <label>Department</label>
+                    <input name="department" placeholder="e.g. HR">
+                </div>
+                <div class="form-field">
+                    <label>Job Position</label>
+                    <input name="position" placeholder="e.g. HR Assistant">
+                </div>
+                <div class="form-field">
+                    <label>Monthly Salary (LKR)</label>
+                    <input type="number" name="salary" min="0" step="0.01" value="0">
+                </div>
+                <div class="form-field">
+                    <label>Joining Date</label>
+                    <input type="date" name="joining_date">
+                </div>
+                <div class="form-field">
+                    <label>Status</label>
+                    <select name="status">
+                        <option>Active</option>
+                        <option>Inactive</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button class="primary-btn" type="submit">＋ Add Employee</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="panel" id="employee-section">
+            <div class="section-heading">
+                <div>
+                    <h2>Employee Directory</h2>
+                    <p class="muted">{{ employees|length }} record(s) shown</p>
+                </div>
+
+                <form class="search-form" method="GET" action="{{ url_for('dashboard') }}">
+                    <input name="search" value="{{ search }}" placeholder="Search employees...">
+                    <button class="secondary-btn" type="submit">Search</button>
+                    {% if search %}
+                        <a class="secondary-btn" href="{{ url_for('dashboard') }}">Clear</a>
+                    {% endif %}
+                </form>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Employee</th>
+                            <th>Department / Position</th>
+                            <th>Phone</th>
+                            <th>Salary (LKR)</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for emp in employees %}
+                        <tr>
+                            <td>#{{ emp.id }}</td>
+                            <td>
+                                <strong>{{ emp.name }}</strong>
+                                <small>{{ emp.email or 'No email' }}</small>
+                            </td>
+                            <td>
+                                {{ emp.department or '—' }}
+                                <small>{{ emp.position or '—' }}</small>
+                            </td>
+                            <td>{{ emp.phone }}</td>
+                            <td>{{ "{:,.2f}".format(emp.salary or 0) }}</td>
+                            <td>
+                                <span class="badge {{ 'active' if emp.status == 'Active' else 'inactive' }}">
+                                    {{ emp.status }}
+                                </span>
+                            </td>
+                            <td class="actions">
+                                <button type="button" class="edit-btn"
+                                    data-id="{{ emp.id }}"
+                                    data-name="{{ emp.name }}"
+                                    data-phone="{{ emp.phone }}"
+                                    data-email="{{ emp.email or '' }}"
+                                    data-department="{{ emp.department or '' }}"
+                                    data-position="{{ emp.position or '' }}"
+                                    data-salary="{{ emp.salary or 0 }}"
+                                    data-date="{{ emp.joining_date or '' }}"
+                                    data-status="{{ emp.status }}"
+                                    onclick="openEdit(this)">Edit</button>
+
+                                <form method="POST"
+                                      action="{{ url_for('delete_employee', employee_id=emp.id) }}"
+                                      onsubmit="return confirm('Delete this employee permanently?')">
+                                    <button class="delete-btn" type="submit">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="7" class="empty-state">No employees found. Add your first employee above.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<dialog id="editDialog" class="edit-dialog">
+    <form id="editForm" method="POST">
+        <div class="section-heading">
+            <h2>Edit Employee</h2>
+            <button type="button" class="logout-btn" onclick="closeEdit()">✕</button>
+        </div>
+
+        <div class="employee-form">
+            <div class="form-field"><label>Full Name *</label><input name="name" id="editName" required></div>
+            <div class="form-field"><label>Phone *</label><input name="phone" id="editPhone" required></div>
+            <div class="form-field"><label>Email</label><input type="email" name="email" id="editEmail"></div>
+            <div class="form-field"><label>Department</label><input name="department" id="editDepartment"></div>
+            <div class="form-field"><label>Position</label><input name="position" id="editPosition"></div>
+            <div class="form-field"><label>Salary (LKR)</label><input type="number" name="salary" id="editSalary" min="0" step="0.01"></div>
+            <div class="form-field"><label>Joining Date</label><input type="date" name="joining_date" id="editDate"></div>
+            <div class="form-field"><label>Status</label><select name="status" id="editStatus"><option>Active</option><option>Inactive</option></select></div>
+        </div>
+
+        <div class="form-actions">
+            <button class="primary-btn" type="submit">Save Changes</button>
+            <button class="secondary-btn" type="button" onclick="closeEdit()">Cancel</button>
+        </div>
+    </form>
+</dialog>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
+```
